@@ -1,43 +1,61 @@
 import configparser
-# import logging
+from http.cookiejar import request_port
+
+import requests
 
 import requests.exceptions
 from blizzardapi2 import BlizzardApi
-
-# Lets get this logging shit out of the way for now
-# logger = logging.getLogger('wowapi')
-# logger.setLevel(logging.INFO)
-# handler = logging.StreamHandler()
-# handler.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
+from requests.auth import HTTPBasicAuth
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# logger.info('Game Data API Example')
+
+token_url = config.get('CLIENT', 'TokenEndpoint')
+search_url = config.get('CLIENT', 'SearchEndpoint')
+basic = HTTPBasicAuth(config.get('CLIENT', 'ClientID'), config.get('CLIENT', 'ClientSecret'))
+
 
 api_client = BlizzardApi(config.get('CLIENT', 'ClientID'), config.get('CLIENT', 'ClientSecret'))
 
+def __get_access_token():
+
+    response = requests.post(
+        token_url,
+        data={"grant_type": "client_credentials"},
+        auth=basic
+    )
+    return response.json()["access_token"]
+
+
+
 
 # TODO build a search function using the search endpoint (in the config file). This will need to get an access token
-#  from the OAuth server and pass it as a parameter to the HTTP request that returns the itemID
+#  from the OAuth server and pass it as a header to the HTTP request that returns the itemID
 #
-# def search_For_Item(name):
+def search_for_item(name):
+    access_token = __get_access_token()
+    search_endpoint = 'https://us.api.blizzard.com/data/wow/search/item'
+    headers= {'Authorization': f"Bearer {access_token}", 'Battlenet-Namespace':'static-us'}
+    params = {'name.en_US': name,':region': 'us','orderby':'id'}
+
+    response = requests.get(search_endpoint,params=params,headers=headers)
+
+    return response.json()
+
 #  result = some OAuth fuckery here.
 
-def get_item_from_api(item_id):
+def __get_item_from_api(item_id):
     item = ""
     try:
         item = api_client.wow.game_data.get_item('eu', "en_GB", item_id)
     except requests.exceptions.HTTPError:
         pass
     if item:
-        return format_item(item)
+        return __format_item(item)
 
 
-def format_item(item):
+def __format_item(item):
     return_string = ''
     stats_list = ''
     spell_list = ''
@@ -137,6 +155,6 @@ def format_item(item):
 # And Gems
 # Maybe switch based on item type, and have a custom parser for each one?
 
-result = get_item_from_api(212454)
-if result:
-    print(result)
+# result = __get_item_from_api(212454)
+# if result:
+#     print(result)

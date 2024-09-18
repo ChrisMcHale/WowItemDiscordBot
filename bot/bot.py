@@ -1,14 +1,13 @@
 # main.py - The NiceBot Entry Point
 import datetime
 import discord
-import mysql.connector
 import os
 import re
 from collections import defaultdict
-from dotenv import load_dotenv
+
 
 # Load in the Environmental Variables from the local .env file
-load_dotenv()
+
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD_NAME = os.getenv('DISCORD_GUILD')
 DB_USER = os.getenv('DATABASE_USER')
