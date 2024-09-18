@@ -17,7 +17,7 @@ config.read('config.ini')
 # TODO like.. everyting?
 def initialise_bot():
     logger.info("Bot Started")
-    print(api.search_for_item('Alunira'))
+    print(api.search_for_item('S'))
     pass
 
 

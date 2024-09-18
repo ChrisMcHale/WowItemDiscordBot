@@ -35,24 +35,28 @@ def __get_access_token():
 #
 def search_for_item(name):
     access_token = __get_access_token()
-    search_endpoint = 'https://us.api.blizzard.com/data/wow/search/item'
-    headers= {'Authorization': f"Bearer {access_token}", 'Battlenet-Namespace':'static-us'}
-    params = {'name.en_US': name,':region': 'us','orderby':'id'}
+    params = {'namespace':'static-us','name.en_US':name,'_page':1,'access_token':access_token}
+    response = requests.get(search_url,params=params)
+    response_json = response.json()
 
-    response = requests.get(search_endpoint,params=params,headers=headers)
+    # Loop around the results in the response JSON dictionary to look for an item that matches the name of the search term.
+    # this should only hit on the exact name of the item, anything else returns None
+    for count in range(len(response_json['results'])):
+        current_item_name = response_json['results'][count]['data']['name']['en_US']
+        if current_item_name == name:
+            return __get_item_from_api(int(response_json['results'][count]['data']['id']))
 
-    return response.json()
 
-#  result = some OAuth fuckery here.
 
 def __get_item_from_api(item_id):
     item = ""
     try:
         item = api_client.wow.game_data.get_item('eu', "en_GB", item_id)
+        return __format_item(item)
     except requests.exceptions.HTTPError:
         pass
-    if item:
-        return __format_item(item)
+
+
 
 
 def __format_item(item):
