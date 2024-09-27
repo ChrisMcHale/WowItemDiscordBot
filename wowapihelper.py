@@ -1,65 +1,89 @@
 import configparser
-from http.cookiejar import request_port
+import logging
 
 import requests
-
 import requests.exceptions
 from blizzardapi2 import BlizzardApi
+from requests import HTTPError
 from requests.auth import HTTPBasicAuth
 
 config = configparser.ConfigParser()
 config.read('config.ini')
-
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+logging.basicConfig(filename='wowbot.log', encoding='utf-8', level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s - %(message)s')
 
 token_url = config.get('CLIENT', 'TokenEndpoint')
 search_url = config.get('CLIENT', 'SearchEndpoint')
 basic = HTTPBasicAuth(config.get('CLIENT', 'ClientID'), config.get('CLIENT', 'ClientSecret'))
 
-
 api_client = BlizzardApi(config.get('CLIENT', 'ClientID'), config.get('CLIENT', 'ClientSecret'))
 
+
 def __get_access_token():
-
-    response = requests.post(
-        token_url,
-        data={"grant_type": "client_credentials"},
-        auth=basic
-    )
-    return response.json()["access_token"]
-
-
+    """A function to retrieve an Access Token from the blizzard OAuth2 API. This token is used to access protected API endpoints"""
+    try:
+        log.info("Attempt to request access token")
+        response = requests.post(
+            token_url,
+            data={"grant_type": "client_credentials"},
+            auth=basic
+        )
+    except HTTPError:
+        log.error(HTTPError)
+    else:
+        log.info(f"Access Token Recieved - {response.json()["access_token"]}")
+        log.debug(response.json()["access_token"])
+        return response.json()["access_token"]
 
 
 # TODO build a search function using the search endpoint (in the config file). This will need to get an access token
 #  from the OAuth server and pass it as a header to the HTTP request that returns the itemID
 #
-def search_for_item(name):
+def search_for_item(item_name):
+    """A function that takes a string as a search value, and interrogates the World of Warcraft Item Search API to retrieve the result set.
+    It then iterates over the set looking for a matching string and passes the ItemID for that record on to the __get_item_from_api function"""
+    log.info(f"~~~~~~~~Search requested for item {item_name}")
+    name = str(item_name).lower()
     access_token = __get_access_token()
-    params = {'namespace':'static-us','name.en_US':name,'_page':1,'access_token':access_token}
-    response = requests.get(search_url,params=params)
-    response_json = response.json()
-
+    params = {'namespace': 'static-us', 'name.en_US': name, '_page': 1, 'access_token': access_token}
+    try:
+        response = requests.get(search_url, params=params)
+    except HTTPError:
+        log.error(HTTPError)
+    else:
+        response_json = response.json()
+        log.debug(response_json)
     # Loop around the results in the response JSON dictionary to look for an item that matches the name of the search term.
     # this should only hit on the exact name of the item, anything else returns None
-    for count in range(len(response_json['results'])):
-        current_item_name = response_json['results'][count]['data']['name']['en_US']
-        if current_item_name == name:
-            return __get_item_from_api(int(response_json['results'][count]['data']['id']))
+        item_count = len(response_json['results'])
+        log.info(f"Found {item_count} items from the API")
+        for count in range(item_count):
+            current_item_name = response_json['results'][count]['data']['name']['en_US']
 
+            if current_item_name.lower() == name:
+                log.info(f"Match found, item ID {int(response_json['results'][count]['data']['id'])}")
+                return __get_item_from_api(int(response_json['results'][count]['data']['id']))
+            else:
+                log.debug(f"Not {current_item_name}")
 
 
 def __get_item_from_api(item_id):
+    """A function that retrieves a specific item from the World of Warcraft Item API by its unique ItemID and passes the JSON to the __format_item function for formatting"""
     item = ""
     try:
+        log.info(f"Searching for item ID {item_id}")
         item = api_client.wow.game_data.get_item('eu', "en_GB", item_id)
-        return __format_item(item)
+        log.info("Sending item for formatting")
+        return item['preview_item']
     except requests.exceptions.HTTPError:
-        pass
-
-
+        return None
 
 
 def __format_item(item):
+    """A function that takes a JSON object describing a speficic item from the World of Warcraft Item API and formats an output string based on the values within"""
+    log.info(f"Recived item {item}")
     return_string = ''
     stats_list = ''
     spell_list = ''
@@ -141,7 +165,7 @@ def __format_item(item):
         pass
 
     try:
-        price = (f"{item['preview_item']['sell_price']['display_strings']['header']}" 
+        price = (f"{item['preview_item']['sell_price']['display_strings']['header']}"
                  f"{item['preview_item']['sell_price']['display_strings']['gold']}G "
                  f"{item['preview_item']['sell_price']['display_strings']['silver']}S "
                  f"{item['preview_item']['sell_price']['display_strings']['copper']}C")
@@ -151,8 +175,8 @@ def __format_item(item):
     return_string = return_string + f"https://www.wowhead.com/item={item_id}"
     if return_string:
         return_string = return_string.rstrip()
-    return return_string
-
+        log.info(f"Returning formatted output {return_string}")
+        return return_string
 
 # TODO Reagents barely fucking work. Gotta get them sorted out.
 # Recipies too.

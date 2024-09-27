@@ -1,0 +1,93 @@
+body {
+    background-color: #1c1c1c;
+    font-family: 'Verdana', sans-serif;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.tooltip {
+    background-color: #101010;
+    border: 1px solid #ad8a34;
+    padding: 5px 5px; /* Consistent padding */
+    width: 320px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.item-name,
+.item-type,
+.item-binding,
+.item-stats,
+.item-effect,
+.item-level,
+.item-sellprice,
+.item-requirement {
+    margin-left: 0px; /* Ensure no indentation */
+    margin-bottom: 5px; /* Add consistent space between lines */
+}
+
+.item-name {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.item-name.heirloom {
+    color: #00ccff;
+}
+
+.item-name.artifact {
+    color: #e6cc80;
+}
+
+.item-name.legendary {
+    color: #ff8000;
+}
+
+.item-name.epic {
+    color: #a335ee;
+}
+
+.item-name.rare {
+    color: #0070dd;
+}
+
+.item-name.common {
+    color: #ffffff;
+}
+
+.item-name.poor {
+    color: #9d9d9d;
+}
+
+.item-type {
+    color: #8b8b8b;
+    font-size: 14px;
+}
+
+.item-binding {
+    color: #ffd100;
+}
+
+.item-stats .stat {
+    color: #1Eff00;
+}
+
+.sellprice {
+    color: #ffffff;
+}
+
+.item-effect {
+    color: #1Eff00;
+    font-style: italic;
+}
+
+.item-level {
+    color: #ffd100;
+}
+
+.item-requirement {
+    color: #ff2020;
+}
