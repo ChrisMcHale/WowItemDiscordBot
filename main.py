@@ -1,4 +1,3 @@
-# bot.py - The Entry Point
 import configparser
 import datetime
 import logging
