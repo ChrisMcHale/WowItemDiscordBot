@@ -4,6 +4,7 @@ import logging
 import re
 
 import discord
+import mysql.connector
 
 import tooltip_creator
 import wowapihelper
@@ -18,10 +19,12 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 TOKEN = config.get('BOT', 'TOKEN')
 GUILD_NAME = config.get('BOT', 'GUILD_NAME')
-# DB_USER = os.getenv('DATABASE_USER')
-# DB_PASSWORD = os.getenv('DATABASE_PASSWORD')
-# DB_HOST = os.getenv('DATABASE_HOST')
-# DB_SCHEMA = os.getenv('DATABASE_SCHEMA')
+DB_USER = config.get('DB', 'USER')
+DB_PASS = config.get('DB', 'PASS')
+DB_ENDPOINT = config.get('DB', 'ENDPOINT')
+DB_PORT = config.get('DB', 'PORT')
+DB_SCHEMA = config.get('DB', 'SCHEMA')
+
 BOT_PREFIX = config.get('BOT', 'BOT_PREFIX')
 HELP_MESSAGE = config.get('BOT', 'HELP_MESSAGE')
 
@@ -33,21 +36,22 @@ def get_current_datetime():
 
 
 # Set up the Database Connection
-# def connect_to_database():
-#     config = {
-#         "user": DB_USER,
-#         "password": DB_PASSWORD,
-#         "host": DB_HOST,
-#         "database": DB_SCHEMA
-#     }
-#     try:
-#         db_connection = mysql.connector.connect(**config)
-#         return db_connection
-#     except:
-#         print("Connection to DB Failed")
-#         exit(1)
-#
-#
+def connect_to_database():
+    config = {
+        "user": DB_USER,
+        "password": DB_PASS,
+        "host": DB_ENDPOINT,
+        "database": DB_SCHEMA,
+        "port": DB_PORT
+    }
+    try:
+        db_connection = mysql.connector.connect(**config)
+        return db_connection
+    except:
+        print("Connection to DB Failed")
+        exit(1)
+
+
 # # Returns the number of times a user said Nice based on their User ID
 # def get_nice_count_for_user_id(id):
 #     db_connection = connect_to_database()
@@ -94,6 +98,8 @@ def get_current_datetime():
 
 client = discord.Client(intents=discord.Intents.all())
 
+
+# pointer = connect_to_database()
 
 # The Client On_Ready event - This fires when the Bot connects to Discord and joins the Guild
 @client.event

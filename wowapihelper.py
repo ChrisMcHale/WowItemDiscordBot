@@ -47,9 +47,14 @@ def search_for_item(item_name):
     log.info(f"~~~~~~~~Search requested for item {item_name}")
     name = str(item_name).lower()
     access_token = __get_access_token()
-    params = {'namespace': 'static-us', 'name.en_US': name, '_page': 1, 'access_token': access_token}
+    headers = {'Authorization': f'Bearer {access_token}'}
+    # params = {'namespace': 'static-us', 'name.en_US': name, '_page': 1, 'access_token': access_token}
+    params = {'namespace': 'static-us', 'name.en_US': name, '_page': 1}
     try:
-        response = requests.get(search_url, params=params)
+        response = requests.get(search_url, params=params, headers=headers)
+        if response.status_code == 401:
+            log.error("Unauthorised")
+            pass
     except HTTPError:
         log.error(HTTPError)
     else:
